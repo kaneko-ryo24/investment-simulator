@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="投資の利回りを簡単にシミュレーション">
+  <meta name="theme-color" content="#6366f1">
+  <title>💰 投資シミュレーター</title>
+  
+  <!-- PWA用のmanifest -->
+  <link rel="manifest" href="manifest.json">
+  
+  <!-- アイコン -->
+  <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💰</text></svg>">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💰</text></svg>">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- React & ReactDOM -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  
+  <!-- Recharts -->
+  <script src="https://unpkg.com/recharts@2.5.0/dist/Recharts.js"></script>
+  
+  <!-- Babel Standalone (JSXをブラウザで変換) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+        sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+    const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } = Recharts;
+
+    function InvestmentCalculator() {
+      const [initialAmount, setInitialAmount] = useState(0);
+      const [monthlyAmount, setMonthlyAmount] = useState(30000);
+      const [annualRate, setAnnualRate] = useState(5);
+      const [years, setYears] = useState(10);
+      const [results, setResults] = useState([]);
+
+      const calculateInvestment = () => {
+        const monthlyRate = annualRate / 100 / 12;
+        const data = [];
+
+        for (let year = 1; year <= years; year++) {
+          const currentMonths = year * 12;
+          
+          // 元金の複利計算
+          const initialGrowth = initialAmount * Math.pow(1 + monthlyRate, currentMonths);
+          
+          // 毎月積立の複利計算
+          let monthlyGrowth = 0;
+          for (let i = 1; i <= currentMonths; i++) {
+            monthlyGrowth += monthlyAmount * Math.pow(1 + monthlyRate, currentMonths - i + 1);
+          }
+
+          const total = initialGrowth + monthlyGrowth;
+          const totalInvested = initialAmount + (monthlyAmount * currentMonths);
+          const profit = total - totalInvested;
+
+          data.push({
+            year: year,
+            total: Math.round(total),
+            invested: totalInvested,
+            profit: Math.round(profit)
+          });
+        }
+
+        setResults(data);
+      };
+
+      useEffect(() => {
+        calculateInvestment();
+      }, [monthlyAmount, annualRate, years, initialAmount]);
+
+      const formatNumber = (num) => {
+        return num.toLocaleString('ja-JP');
+      };
+
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 md:p-8">
+          <div className="max-w-6xl mx-auto">
+            <h1 className="text-3xl md:text-4xl font-bold text-center mb-2 text-indigo-900">
+              💰 投資シミュレーター
+            </h1>
+            <p className="text-center text-gray-600 mb-6 md:mb-8">
+              毎月コツコツ積立投資したら、どれくらい増えるかな?
+            </p>
+
+            {/* 入力フォーム */}
+            <div className="bg-white rounded-2xl shadow-xl p-4 md:p-8 mb-6 md:mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                {/* 元金 */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    💵 元金(最初の金額)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      value={initialAmount}
+                      onChange={(e) => setInitialAmount(Number(e.target.value))}
+                      className="w-full px-4 py-3 border-2 border-indigo-200 rounded-lg focus:border-indigo-500 focus:outline-none text-lg"
+                      min="0"
+                      step="10000"
+                    />
+                    <span className="absolute right-4 top-3 text-gray-500 text-lg">円</span>
+                  </div>
+                </div>
+
+                {/* 毎月の積立額 */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    📅 毎月の積立額
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      value={monthlyAmount}
+                      onChange={(e) => setMonthlyAmount(Number(e.target.value))}
+                      className="w-full px-4 py-3 border-2 border-indigo-200 rounded-lg focus:border-indigo-500 focus:outline-none text-lg"
+                      min="0"
+                      step="1000"
+                    />
+                    <span className="absolute right-4 top-3 text-gray-500 text-lg">円</span>
+                  </div>
+                </div>
+
+                {/* 年利 */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    📈 年利(利回り)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      value={annualRate}
+                      onChange={(e) => setAnnualRate(Number(e.target.value))}
+                      className="w-full px-4 py-3 border-2 border-indigo-200 rounded-lg focus:border-indigo-500 focus:outline-none text-lg"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                    />
+                    <span className="absolute right-4 top-3 text-gray-500 text-lg">%</span>
+                  </div>
+                </div>
+
+                {/* 期間 */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    ⏰ 何年後まで見る?
+                  </label>
+                  <select
+                    value={years}
+                    onChange={(e) => setYears(Number(e.target.value))}
+                    className="w-full px-4 py-3 border-2 border-indigo-200 rounded-lg focus:border-indigo-500 focus:outline-none text-lg bg-white"
+                  >
+                    {[5, 10, 15, 20, 25, 30].map(y => (
+                      <option key={y} value={y}>{y}年</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* グラフ */}
+            <div className="bg-white rounded-2xl shadow-xl p-4 md:p-8 mb-6 md:mb-8">
+              <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 text-indigo-900">
+                📊 資産の推移グラフ
+              </h2>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={results}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="year" 
+                    label={{ value: '年', position: 'insideBottom', offset: -5 }}
+                  />
+                  <YAxis 
+                    tickFormatter={(value) => `${(value / 10000).toFixed(0)}万`}
+                    label={{ value: '金額(円)', angle: -90, position: 'insideLeft' }}
+                  />
+                  <Tooltip 
+                    formatter={(value) => `¥${formatNumber(value)}`}
+                    labelFormatter={(label) => `${label}年後`}
+                  />
+                  <Legend />
+                  <Line 
+                    type="monotone" 
+                    dataKey="total" 
+                    stroke="#6366f1" 
+                    strokeWidth={3}
+                    name="総資産"
+                    dot={{ r: 4 }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="invested" 
+                    stroke="#94a3b8" 
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
+                    name="元本"
+                    dot={{ r: 3 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* 結果の表 */}
+            <div className="bg-white rounded-2xl shadow-xl p-4 md:p-8">
+              <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 text-indigo-900">
+                📋 詳細な計算結果
+              </h2>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm md:text-base">
+                  <thead>
+                    <tr className="bg-indigo-100">
+                      <th className="px-3 md:px-6 py-3 text-left font-semibold text-indigo-900">
+                        経過年数
+                      </th>
+                      <th className="px-3 md:px-6 py-3 text-right font-semibold text-indigo-900">
+                        元本
+                      </th>
+                      <th className="px-3 md:px-6 py-3 text-right font-semibold text-indigo-900">
+                        運用益
+                      </th>
+                      <th className="px-3 md:px-6 py-3 text-right font-semibold text-indigo-900">
+                        総資産
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {results.map((result, index) => (
+                      <tr 
+                        key={result.year}
+                        className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}
+                      >
+                        <td className="px-3 md:px-6 py-3 font-medium text-gray-900">
+                          {result.year}年後
+                        </td>
+                        <td className="px-3 md:px-6 py-3 text-right text-gray-600">
+                          ¥{formatNumber(result.invested)}
+                        </td>
+                        <td className="px-3 md:px-6 py-3 text-right font-semibold text-green-600">
+                          +¥{formatNumber(result.profit)}
+                        </td>
+                        <td className="px-3 md:px-6 py-3 text-right font-bold text-indigo-900">
+                          ¥{formatNumber(result.total)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* サマリー */}
+              {results.length > 0 && (
+                <div className="mt-6 p-4 md:p-6 bg-indigo-50 rounded-xl">
+                  <p className="text-base md:text-lg text-indigo-900">
+                    <span className="font-bold">{years}年後の結果:</span>
+                    <br />
+                    {initialAmount > 0 && (
+                      <>
+                        元金 <span className="font-bold text-gray-700">¥{formatNumber(initialAmount)}</span> + 
+                        積立 <span className="font-bold text-gray-700">¥{formatNumber(monthlyAmount * years * 12)}</span> = 
+                        元本合計 <span className="font-bold text-gray-700">¥{formatNumber(results[results.length - 1].invested)}</span> が、
+                      </>
+                    )}
+                    {initialAmount === 0 && (
+                      <>
+                        元本 <span className="font-bold text-gray-700">¥{formatNumber(results[results.length - 1].invested)}</span> が、
+                      </>
+                    )}
+                    <br />
+                    <span className="font-bold text-indigo-700"> ¥{formatNumber(results[results.length - 1].total)}</span> に!
+                    <br />
+                    <span className="text-green-600 font-bold">
+                      +¥{formatNumber(results[results.length - 1].profit)}
+                    </span> の利益が出ます 🎉
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* 注意書き */}
+            <div className="mt-6 text-center text-xs md:text-sm text-gray-500">
+              <p>※ これはシミュレーションです。実際の投資結果を保証するものではありません。</p>
+              <p>※ 税金や手数料は考慮していません。</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Reactアプリをレンダリング
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<InvestmentCalculator />);
+  </script>
+
+  <script>
+    // Service Workerの登録
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js')
+          .then(registration => {
+            console.log('Service Worker registered:', registration);
+          })
+          .catch(error => {
+            console.log('Service Worker registration failed:', error);
+          });
+      });
+    }
+  </script>
+</body>
+</html>
