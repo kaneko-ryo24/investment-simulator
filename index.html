@@ -187,7 +187,7 @@
                   <div className="relative">
                     <input
                       type="number"
-                      value={initialAmount}
+                      value={initialAmount || ''}
                       onChange={(e) => setInitialAmount(Number(e.target.value))}
                       className="w-full px-4 py-3 border-2 border-indigo-200 rounded-lg focus:border-indigo-500 focus:outline-none text-lg"
                       min="0"
@@ -205,8 +205,8 @@
                   <div className="relative">
                     <input
                       type="number"
-                      value={monthlyAmount}
-                      onChange={(e) => setMonthlyAmount(Number(e.target.value))}
+  value={monthlyAmount || ''}
+  onChange={(e) => setMonthlyAmount(Number(e.target.value) || 0)}
                       className="w-full px-4 py-3 border-2 border-indigo-200 rounded-lg focus:border-indigo-500 focus:outline-none text-lg"
                       min="0"
                       step="1000"
